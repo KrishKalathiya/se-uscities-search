@@ -1,7 +1,7 @@
 /* =============================================================================
  * EECE/CS 3093C Software Engineering — Lab 4
  * client.js — code skeleton provided by Dr. Phu Phung in Lab 1
- * Code complete implementation by Phu Phung
+ * Code complete implementation by Krish Kalathiya
  * ===============================================================================
  */
 
@@ -25,14 +25,37 @@ searchInput.addEventListener('keypress', function(e) {
     search();
     searchInput.value = ''; // clear the field after an explicit Enter search
   }
-});
+}   );
 
-function search() {
-    var query = searchInput.value.trim();
-    if (!query) return;   // AC-02.2: empty messages are ignored
+const BASE_URL = "https://kalathkj-uscities-microservices-bghegnhpf8dqfcbb.canadacentral-01.azurewebsites.net/"; // Task 1 Microservice URL deployed in Azure
+
+async function search() {
+    const query = searchInput.value.trim();
+    if (!query) return; // AC9: empty/whitespace-only queries never reach fetch()
     console.log(`Debug>query: ${query}`); //for UI testing only
+    try {
+        const response = await fetch(`${BASE_URL}/uscities-search/${encodeURIComponent(query)}`);
+        if (!response.ok) {
+            throw new Error(`Unexpected status ${response.status}`); // AC4/AC11: fail safely, not open
+        }
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+            throw new Error('Malformed response'); // AC10: validate shape before display
+        }
+        displaySearch(data);
+   } catch (err) {
+        console.log(`Debug>search error: ${err.message}`);
+        responses.textContent = 'Error: could not load results.'; // AC4/AC11
+    }
 }
 
+var responsesElm = document.getElementById('responses');
 function displaySearch(data) {
-  //TODO
+  if(!responsesElm) {
+    console.log('Error in getting "responses"');
+    return;
+  }
+  // AC1/AC2: matches found — this version only shows the raw JSON text
+  // AC3: no matches — explicit message instead of a blank/empty display textContent for now
+  responsesElm.textContent = data.length === 0 ? 'No cities found' : JSON.stringify(data, null, 2);
 }
